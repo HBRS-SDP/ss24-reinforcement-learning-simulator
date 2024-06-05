@@ -281,7 +281,7 @@ def main(cfg,ep):
 
 						
 	command = './simDRLSR.x86_64'
-	directory = '../Simulator0.270/'
+	directory = '../'
 	command = abspath(join(directory,command))
 
 
