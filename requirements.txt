@@ -1,0 +1,14 @@
+numpy
+tensorflow
+gym
+matplotlib
+opencv-python
+Cython
+IPython
+cryptography
+jinja2
+lxml
+setuptools
+Torch
+tornado
+wheel
