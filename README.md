@@ -1,4 +1,4 @@
-# ss24-reinforcement-learning-simulator
+# ss24-reinforcement-learning-simulator update
 ## SimDRLSR: Deep Reinforcement Learning Simulator for Social Robotics
 
 [![Stars][stars-shield]][stars-url]
@@ -9,7 +9,9 @@
 <!--Table of contents-->
 
 ## About the project
+This project is an update of the [SimDRLSR](https://github.com/JPedroRBelo/simDRLSR) (Deep Reinforcement Learning and Social Robotics Simulator) simulator and includes the design of an API to improve its existing functions.
 
+The simulation environment enables efficient, safe, and controlled testing and validation of reinforcement learning models. The simulator allows the robot (Pepper) to interact with an avatar (human), performing four main tasks: greeting, following with your gaze, greeting and waiting.
 ## Prerequites
 
 ## Simulator Configuration
