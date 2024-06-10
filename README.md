@@ -19,8 +19,30 @@ The simulation environment enables efficient, safe, and controlled testing and v
 ## How to setup the conda environment
 
 ## How to run the simulator
+Follow the next steps  to run the simulator:
+1. Change to the simDRLSR directory:
+```sh
+cd simDRLSR
+```
+2. Execute the simulation file:
+
+```sh
+./simDRLSR.x86_64
+ ```
 
 ### Validate the simulator
+Follow the next steps  to run the validation script :
+1. Open a new terminal
+2. Change to the simDRLSR/pyMDQN directory:
+```sh
+  cd simDRLSR/pyMDQN
+  ```
+3. Execute the validation script using python:
+```sh
+  python3 validate.py
+  ```
+
+
 
 ### Train pyMDQN model with the simulator
 
