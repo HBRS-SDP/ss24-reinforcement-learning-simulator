@@ -13,8 +13,40 @@ This project is an update of the [SimDRLSR](https://github.com/JPedroRBelo/simDR
 
 The simulation environment enables efficient, safe, and controlled testing and validation of reinforcement learning models. The simulator allows the robot (Pepper) to interact with an avatar (human), performing four main tasks: greeting, following with your gaze, greeting and waiting.
 ## Prerequites
+The simulator requirements are:
+- Ubuntu 22.04.4 LTS
+- Unity 2022.3.32f1
 
-## Simulator Configuration
+pyMDQN requirements in the document [requirement](requirements.txt).
+
+- Python 3.12
+- Ptorch 2.3.1
+- ...
+## Instalation 
+
+1. Cloning repository 
+    ```sh
+   git clone git@github.com:HBRS-SDPss24-reinforcement-learning-simulator.git
+   ```
+2.
+
+## Unity Configuration 
+
+The following steps are the configuration for generate Unity simulator file (simDRLSR.x86_64)
+
+1. In Unity software, go to `File>Open project>`open project and select the folder "simDRLSR unity". If unity Hub is been used, click on Add and select the same folder. 
+2. Go to `File>Open Scene>` and open "Library.unity" located in simDRLSR_Unity/Assets/Scenes/
+3. With Library.unity opened, click on Library on Hierarchy.
+4. Go to `Window>AI>Navigation(Obsolete)` and click on "Bake"
+
+    ![bake_instruccion](./images/Bake.png)
+
+5. Go to `Window>Rendering>Lighting` and verify that "Auto Generate" checkbox is unchecked
+
+    ![Lighting_uncheck](./images/Lighting.png)
+7. Go to `File>Build Settings>` and click on "Build"
+8. Navigate to "ss24-reinforcement-learning-simulator/" folder and save it with the name "simDRLSR.x86_64"
+
 
 ## How to setup the conda environment
 
@@ -29,6 +61,8 @@ cd simDRLSR
 ```sh
 ./simDRLSR.x86_64
  ```
+
+
 
 ### Validate the simulator
 Follow the next steps  to run the validation script :
