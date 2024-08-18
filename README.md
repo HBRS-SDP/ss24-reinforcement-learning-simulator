@@ -101,6 +101,15 @@ Labels:
 
 ## How to setup the conda environment
 
+### Adding Conda Channels
+
+Before creating the Conda environment, add the necessary channels:
+
+```sh
+conda config --add channels conda-forge
+conda config --add channels defaults
+```
+
 1. Create a new conda environment with the following command:
 ```sh
 conda create --name simDRLSR --file requirements.txt
