@@ -21,8 +21,8 @@ class RobotNQL:
 		self.episode=epi
 
 		if(validation):
-			file_modelGray='validation/'+epi+'/modelGray.net'
-			file_modelDepth='validation/'+epi+'/modelDepth.net'	
+			file_modelGray='validation/validation'+str(epi)+'/modelGray.net'
+			file_modelDepth='validation/validation'+str(epi)+'/modelDepth.net'	
 		else:
 			file_modelGray='results/ep'+str(self.episode-1)+'/modelGray.net'
 			file_modelDepth='results/ep'+str(self.episode-1)+'/modelDepth.net'	

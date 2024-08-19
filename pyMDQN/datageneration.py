@@ -160,7 +160,7 @@ def generate_data(episode,agent,env):
 
 def main():
 	#tracker = SummaryTracker()
-	episode=torch.load('files/episode.dat')
+	episode=torch.load('files/episode.dat')			
 	dirname_rgb='dataset/RGB/ep'+str(episode)
 	dirname_dep='dataset/Depth/ep'+str(episode)
 	dirname_model='results/ep'+str(episode)

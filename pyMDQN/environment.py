@@ -12,7 +12,7 @@ import config as dcfg #default config
 
 
 class Environment:
-	def __init__(self,cfg=dcfg,epi=0):
+	def __init__(self,cfg=dcfg,epi=0): #le anadi la comilla al cero 
 		# if gpu is to be used
 		#self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 		#self.r_len=8
@@ -23,21 +23,26 @@ class Environment:
 		print(self.proc_frame_size)
 		self.state_size=cfg.state_size
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		port = cfg.port        
-		host=cfg.host
+		self.port = cfg.port        
+		self.host=cfg.host
 		flag_connection = False
 		
-		while(not flag_connection):
+	def connect_to_robot(self):
+		max_attempts = 5
+		for attempt in range(max_attempts):
 			try:
-				self.client =self.socket.connect((host, port))
-				flag_connection = True
-			except socket.error:
-				print("Can't connect with robot! Trying again...")
-				with open('flag_simulator.txt', 'w') as f:
-					f.write(str(1))	
-				time.sleep(1)
-		with open('flag_simulator.txt', 'w') as f:
-				f.write(str(0))		
+				self.socket.connect((self.host, self.port))
+				print("Successfully connected to the robot.")
+				break
+			except socket.error as e:
+				if attempt < max_attempts - 1:
+					print(f"Connection attempt {attempt + 1} failed: {e}. Retrying...")
+					time.sleep(2)  # Espera 2 segundos antes de reintentar
+				else:
+					print("Failed to connect to the robot after several attempts.")
+					raise  # Re-raise the last exception to indicate failure
+	def close_connection(self):
+		self.socket.close()
 
 	def get_tensor_from_image(self,file):
 		convert = T.Compose([T.ToPILImage(),
@@ -59,13 +64,14 @@ class Environment:
 		for i in range(self.state_size):
 
 			grayfile=dirname_rgb+'/image_'+str(step)+'_'+str(i+1)+'.png'
+			print('imprimir grayfile',grayfile)
+
 			depthfile=dirname_dep+'/depth_'+str(step)+'_'+str(i+1)+'.png'
 			proc_image[i] = self.get_tensor_from_image(grayfile)
 			proc_depth[i] = self.get_tensor_from_image(depthfile)			
 
 		return proc_image.unsqueeze(0),proc_depth.unsqueeze(0)
 
-	
 	def send_data_to_pepper(self,data):
 		print('Send data connected to Pepper')
 		self.socket.send(data.encode())
@@ -77,6 +83,7 @@ class Environment:
 			break
 		print("Connected with the server")
 		return 0
+	
 
 	def perform_action(self,action,step):
 		r=self.send_data_to_pepper(action)
@@ -87,3 +94,6 @@ class Environment:
 	def close_connection(self):
 		self.socket.close()
 
+
+			
+	
