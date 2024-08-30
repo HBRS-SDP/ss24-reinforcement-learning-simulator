@@ -1,8 +1,8 @@
 ﻿<Configure>
   <simulation_quality>Very Low</simulation_quality>
   <fps>60</fps>
-  <width>640</width>
-  <height>480</height>
+  <width>1920</width> 
+  <height>1080</height> 
   <fullscreen>false</fullscreen>
   <ip_address>127.0.0.1</ip_address>
   <port>12375</port>

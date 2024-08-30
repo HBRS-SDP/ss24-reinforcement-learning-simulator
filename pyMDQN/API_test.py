@@ -1,7 +1,7 @@
 from API import API_Functions
 
 
-import config  # Importar la configuración del archivo config.py
+import validation.configValidation as config# Importar la configuración del archivo config.py
 
 
 if __name__ == "__main__":

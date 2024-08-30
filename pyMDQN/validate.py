@@ -52,7 +52,7 @@ def signalHandler(sig, frame):
 
 
 
-def datavalidation(episode,cfg):
+def datavalidation(episode,cfg): #episode = "validation13"
 
 
 
@@ -136,7 +136,7 @@ def datavalidation(episode,cfg):
 		rewards= recent_rewards
 
 	total_reward = aux_total_rewards
-	print(init_step)
+	print("init_step", init_step)
 
 	env.send_data_to_pepper("step"+str(init_step))
 	env.send_data_to_pepper("episode"+str(episode))
@@ -255,7 +255,7 @@ def main(cfg,ep):
 	
 	
 	name_ep=ep_validation+str(n_validation)
-	print(name_ep)
+	print("name_ep", name_ep)
 	Path('validation/'+name_ep).mkdir(parents=True, exist_ok=True)
 
 	

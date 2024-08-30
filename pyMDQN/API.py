@@ -17,9 +17,9 @@ import time
 import shutil
 import logging
 import sys
-import subprocess
 from subprocess import Popen
 from os.path import abspath, dirname, join
+import validation.configValidation as cfg
 
 # logger configuration
 logger = logging.getLogger()
@@ -40,28 +40,20 @@ class API_Functions:
     def openSim(self, process,command):
         process.terminate()
         time.sleep(5)
-        process = subprocess.Popen(command)
+        process = Popen(command)
         time.sleep(5)
         return process
     
     
-    def start(self, ep):
+    def start(self, ep=13):
         global process
         process = Popen('false') 
         
 
-        self.episode = ep
-        episode = "validation" +str(ep)
         
-        dirname_rgb = f'dataset/RGB/ep{episode}'
-        dirname_dep = f'dataset/Depth/ep{episode}'
-        dirname_model = f'validation/{episode}'
+        episode = "validation" +str(ep) #name_ep = eiposde,,,,"validation13"
+        self.episode = episode
         
-        
-        # Create directories for the episode where the images will be stored and read
-        os.makedirs(dirname_rgb, exist_ok=True)
-        os.makedirs(dirname_dep, exist_ok=True)
-        os.makedirs(dirname_model, exist_ok=True)
         
         # call the function to prepare the validation directory
         self.prepare_validation_directory(ep)
@@ -81,14 +73,24 @@ class API_Functions:
         time.sleep(1)
         self.env.close_connection() 
         print("acabe de iniciar") # debuggging
+        
+        dirname_rgb = f'dataset/RGB/ep{episode}'
+        dirname_dep = f'dataset/Depth/ep{episode}'
+        dirname_model = f'validation/{episode}'
+        
+        # Create directories for the episode where the images will be stored and read
+        os.makedirs(dirname_rgb, exist_ok=True)
+        os.makedirs(dirname_dep, exist_ok=True)
+        os.makedirs(dirname_model, exist_ok=True)
 
     # Prepare the validation
-    def prepare_validation_directory(self, episode):
-        episode_str = str(episode)
+    def prepare_validation_directory(self, ep):
+        episode_str = str(ep)
         validation_dir = f'validation/validation{episode_str}/'
         os.makedirs(validation_dir, exist_ok=True)
         print("episode_str", episode_str)
         print("validation_dir", validation_dir)
+        shutil.copy(self.config.__file__, validation_dir)
         shutil.copy(f'results/ep{episode_str}/modelDepth.net', validation_dir)
         shutil.copy(f'results/ep{episode_str}/tModelDepth.net', validation_dir)
         shutil.copy(f'results/ep{episode_str}/modelGray.net', validation_dir)
@@ -113,8 +115,8 @@ class API_Functions:
             aset = self.config.actions  # here we co
 
             # Inicialización del entorno y configuración inicial
-            step = 1
-            terminal = False
+            step = 0
+            terminal = 0
 
             try:
                 # nviarr comandos iniciales a Pepper
@@ -126,15 +128,18 @@ class API_Functions:
                 self.env.close_connection()
                 self.env = Environment(self.config,epi=self.episode)
             except OSError as e:
+                print("Into OSError")
                 if e.errno == 9:
                     self.env = Environment(self.config, epi=self.episode)
                     self.env.send_data_to_pepper("step" + str(step))
 
             # Realizar la primera acción para inicializar el entorno
             screen, depth, reward, terminal = self.env.perform_action('-', step+1) #poner +1
-            while step <= t_steps:
+            while step <= t_steps+1:
                 print(f"Step={step}")
-                action_index = self.agent.perceive(screen, depth, terminal, False, 0, step, self.agent.ep)
+                action_index=0
+                testing = -1
+                action_index = self.agent.perceive(screen, depth, terminal, False, 0, step, testing)
 
                 if action_index is None:
                     action_index = 1
