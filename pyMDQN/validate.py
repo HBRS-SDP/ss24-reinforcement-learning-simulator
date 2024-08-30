@@ -152,7 +152,7 @@ def datavalidation(episode,cfg):
 	depth = None
 	screen, depth, reward, terminal = env.perform_action('-',init_step+1)
 
-	step=init_step		#+1
+	step=init_step+1
 	while step <=t_steps+1:
 		print("Step=",step)
 		action_index=0
