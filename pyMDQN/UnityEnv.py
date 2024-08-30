@@ -1,7 +1,7 @@
 import gymnasium as gym
-from gymnasium import spaces
+import gymnasium.spaces as spaces
 import numpy as np
-from environment import Environment  # Asegúrate de que este es tu environment.py
+#from environment import Environment  # Asegúrate de que este es tu environment.py
 import torch
 import socket
 import config as dcfg 
@@ -101,7 +101,7 @@ class UnityEnv(gym.Env):
         return  reward, done, info
     
     def render(self, mode='human'):
-        pass  # Aquí podrías definir cómo visualizar el entorno si fuera necesario
+        pass  
 
     def close(self):
         self.env.close_connection()
