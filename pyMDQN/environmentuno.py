@@ -121,16 +121,7 @@ class UnityEnv(gym.Env):
         # Enviar la acción al simulador
         r = self.send_data_to_pepper(action)
         print(f"Reward received: {r}")
-        
-        
-        if s is None or d is None:
-            print(f"Error: Screen or Depth is None. Screen: {s}, Depth: {d}")
-        else:
-            print(f"Preprocessing complete. Screen shape: {s.shape}, Depth shape: {d.shape}")
-
-        term = False  # Por ahora, asumimos que 'term' es falso; esto puede cambiar según tu lógica
-        print(f"Returning from perform_action: Screen shape: {s.shape}, Depth shape: {d.shape}, Reward: {r}, Terminal: {term}")
-        return s, d, r, term
+    
     
     def close(self):
         if self.socket is not None:
