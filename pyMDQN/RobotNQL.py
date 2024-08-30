@@ -20,8 +20,8 @@ class RobotNQL:
         self.episode = epi
 
         if validation:
-            file_modelGray = 'validation/' + epi + '/modelGray.net'
-            file_modelDepth = 'validation/' + epi + '/modelDepth.net'
+            file_modelGray = 'validation/validation' + epi + '/modelGray.net'
+            file_modelDepth = 'validation/validation' + epi + '/modelDepth.net'
         else:
             file_modelGray = 'results/ep' + str(self.episode - 1) + '/modelGray.net'
             file_modelDepth = 'results/ep' + str(self.episode - 1) + '/modelDepth.net'
@@ -36,13 +36,9 @@ class RobotNQL:
 
     def perceive(self, state, depth, terminal, testing, numSteps, steps, testing_ep):
             curState = state.to(self.device)
-            if depth is not None:
-                  curDepth = depth.to(self.device)
-            else:
-                  #curDepth = None  # O asigna algún valor predeterminado o maneja este caso de otra manera
-                  curDepth = torch.zeros_like(curState)
+            curDepth = depth.to(self.device)
             actionIndex = 0
-            print("que hago ")
+           
             if not terminal:
                   actionIndex = self.eGreedy(curState, curDepth, numSteps, steps, testing_ep)
                   print("Action: ", self.actions[actionIndex])

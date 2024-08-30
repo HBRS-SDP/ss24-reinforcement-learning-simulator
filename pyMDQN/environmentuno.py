@@ -6,10 +6,16 @@ import config as dcfg
 import socket
 import time
 from os.path import abspath, dirname, join
+#images
+import torch.nn.functional as F
+import torchvision.transforms as T
+from PIL import Image
 
 from subprocess import Popen, PIPE
 
 class UnityEnv(gym.Env):
+    sim_process = None 
+
     def __init__(self, cfg = dcfg, epi=0):
         super(UnityEnv, self).__init__()
         self.episode = epi
@@ -21,8 +27,9 @@ class UnityEnv(gym.Env):
         
         self.observation_space = spaces.Box(low=0, high=255, shape=(self.state_size, self.proc_frame_size, self.proc_frame_size), dtype=np.float32)
         self.action_space = spaces.Discrete(4)
-
-        self.sim_process = self._start_simulator(cfg)
+        
+        
+        
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         port = cfg.port        
@@ -35,7 +42,7 @@ class UnityEnv(gym.Env):
         directory = '../'
         command = abspath(join(directory, command))
         process = Popen(command)
-        time.sleep(10)  # Give it time to start up
+        time.sleep(10)  # Give i    t time to start up
         return process
     
     def _connect_to_pepper(self, host, port):
@@ -67,7 +74,7 @@ class UnityEnv(gym.Env):
                     response_data = self.socket.recv(1024).decode()  # Espera recibir datos del robot
                     if response_data:
                         print(f"Received data from Pepper: {response_data}")
-                        return response_data  # Devuelve la respuesta recibida
+                        return float(response_data.replace(',', '.')) # Devuelve la respuesta recibida
                 except socket.timeout:
                     print("Timeout reached, no response from Pepper")
                     return "No response"  # Devuelve un mensaje si no se recibió respuesta dentro del tiempo de espera
@@ -75,3 +82,62 @@ class UnityEnv(gym.Env):
         except Exception as e:
             print(f"Error sending data to Pepper: {e}")
             return "Error"  # Devuelve un mensaje de error si hubo algún problema al enviar los datos o recibir la respuesta
+    
+
+    def pre_process(self, step):
+        print('Preprocessing images')
+        
+        proc_image = torch.FloatTensor(self.state_size, self.proc_frame_size, self.proc_frame_size)
+        proc_depth = torch.FloatTensor(self.state_size, self.proc_frame_size, self.proc_frame_size)
+        
+        dirname_rgb = 'dataset/RGB/ep' + str(self.episode)
+        dirname_dep = 'dataset/Depth/ep' + str(self.episode)
+        
+        for i in range(self.state_size):
+            grayfile = dirname_rgb + '/image_' + str(step) + '_' + str(i + 1) + '.png'
+            depthfile = dirname_dep + '/depth_' + str(step) + '_' + str(i + 1) + '.png'
+            print(f"Loading image {grayfile} and depth {depthfile}")
+            proc_image[i] = self.get_tensor_from_image(grayfile)
+            proc_depth[i] = self.get_tensor_from_image(depthfile)
+        
+        return proc_image.unsqueeze(0), proc_depth.unsqueeze(0)
+
+    def get_tensor_from_image(self, file):
+        convert = T.Compose([
+            T.ToPILImage(),
+            T.Resize((self.proc_frame_size, self.proc_frame_size), interpolation=Image.BILINEAR),
+            T.ToTensor()
+        ])
+        screen = Image.open(file)
+        screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
+        screen = torch.from_numpy(screen)
+        screen = convert(screen)
+        return screen
+    
+
+    def perform_action(self, action, step):
+        print(f"Performing action: {action} at step: {step}")
+        
+        # Enviar la acción al simulador
+        r = self.send_data_to_pepper(action)
+        print(f"Reward received: {r}")
+        
+        
+        if s is None or d is None:
+            print(f"Error: Screen or Depth is None. Screen: {s}, Depth: {d}")
+        else:
+            print(f"Preprocessing complete. Screen shape: {s.shape}, Depth shape: {d.shape}")
+
+        term = False  # Por ahora, asumimos que 'term' es falso; esto puede cambiar según tu lógica
+        print(f"Returning from perform_action: Screen shape: {s.shape}, Depth shape: {d.shape}, Reward: {r}, Terminal: {term}")
+        return s, d, r, term
+    
+    def close(self):
+        if self.socket is not None:
+            self.socket.close()
+    
+    @classmethod
+    def close_simulation(cls):
+        if cls.sim_process is not None:
+            cls.sim_process.terminate()
+            cls.sim_process = None
