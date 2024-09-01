@@ -44,13 +44,17 @@ class API_Functions:
         time.sleep(5)
         return process
     
+    def signalHandler(self, sig, frame): #no creo q sirve pa nada
+        process.terminate()
+        sys.exit(0)
+    
     
     def start(self, ep=13):
+        torch.manual_seed(torch.initial_seed())  
         global process
         process = Popen('false') 
         
-
-        
+    
         episode = "validation" +str(ep) #name_ep = eiposde,,,,"validation13"
         self.episode = episode
         
@@ -72,6 +76,7 @@ class API_Functions:
         self.env.send_data_to_pepper("start")
         time.sleep(1)
         self.env.close_connection() 
+        time.sleep(1)
         print("acabe de iniciar") # debuggging
         
         dirname_rgb = f'dataset/RGB/ep{episode}'
@@ -110,7 +115,11 @@ class API_Functions:
             logger.info("Simulation terminated.")
 
     def step(self, num_steps=5): #by default 5 steps
+        self.agent= RobotNQL(epi=self.episode, cfg=self.config, validation=True)
+        self.env= Environment(self.config, epi=self.episode)
+
         if self.env and self.agent:
+            "entro al IFFFFFFFFFFFFFFFFFF"
             t_steps = min(self.config.t_steps, num_steps)
             aset = self.config.actions  # here we co
 
