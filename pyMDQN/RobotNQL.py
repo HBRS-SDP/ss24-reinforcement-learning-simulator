@@ -35,10 +35,11 @@ class RobotNQL:
         print("Models loaded successfully")
 
     def perceive(self, state, depth, terminal, testing, numSteps, steps, testing_ep):
+            print(f"que hay en state:{state}")
             curState = state.to(self.device)
             curDepth = depth.to(self.device)
             actionIndex = 0
-           
+
             if not terminal:
                   actionIndex = self.eGreedy(curState, curDepth, numSteps, steps, testing_ep)
                   print("Action: ", self.actions[actionIndex])

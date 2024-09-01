@@ -77,11 +77,11 @@ class UnityEnv(gym.Env):
                         return float(response_data.replace(',', '.')) # Devuelve la respuesta recibida
                 except socket.timeout:
                     print("Timeout reached, no response from Pepper")
-                    return "No response"  # Devuelve un mensaje si no se recibió respuesta dentro del tiempo de espera
+                    return 0  # Devuelve un mensaje si no se recibió respuesta dentro del tiempo de espera
                 break
         except Exception as e:
             print(f"Error sending data to Pepper: {e}")
-            return "Error"  # Devuelve un mensaje de error si hubo algún problema al enviar los datos o recibir la respuesta
+            return 0 # Devuelve un mensaje de error si hubo algún problema al enviar los datos o recibir la respuesta
     
 
     def pre_process(self, step):
@@ -90,8 +90,8 @@ class UnityEnv(gym.Env):
         proc_image = torch.FloatTensor(self.state_size, self.proc_frame_size, self.proc_frame_size)
         proc_depth = torch.FloatTensor(self.state_size, self.proc_frame_size, self.proc_frame_size)
         
-        dirname_rgb = 'dataset/RGB/ep' + str(self.episode)
-        dirname_dep = 'dataset/Depth/ep' + str(self.episode)
+        dirname_rgb = 'dataset/RGB/epvalidation' + str(self.episode)
+        dirname_dep = 'dataset/Depth/epvalidation' + str(self.episode)
         
         for i in range(self.state_size):
             grayfile = dirname_rgb + '/image_' + str(step) + '_' + str(i + 1) + '.png'
@@ -103,6 +103,7 @@ class UnityEnv(gym.Env):
         return proc_image.unsqueeze(0), proc_depth.unsqueeze(0)
 
     def get_tensor_from_image(self, file):
+        print(f"Attempting to load image from file: {file}")
         convert = T.Compose([
             T.ToPILImage(),
             T.Resize((self.proc_frame_size, self.proc_frame_size), interpolation=Image.BILINEAR),
@@ -112,6 +113,7 @@ class UnityEnv(gym.Env):
         screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
         screen = torch.from_numpy(screen)
         screen = convert(screen)
+        print(f"Image loaded and processed: {screen.shape}")
         return screen
     
 
@@ -121,6 +123,14 @@ class UnityEnv(gym.Env):
         # Enviar la acción al simulador
         r = self.send_data_to_pepper(action)
         print(f"Reward received: {r}")
+        
+        # Procesar las imágenes recibidas
+        s, d = self.pre_process(step)
+
+        term = False  # Por ahora, asumimos que 'term' es falso; esto puede cambiar según tu lógica
+        print(f"Returning from perform_action: Screen shape: {s.shape}, Depth shape: {d.shape}, Reward: {r}, Terminal: {term}")
+        return s, d, r, term
+
     
     
     def close(self):

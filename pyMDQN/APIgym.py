@@ -8,6 +8,8 @@ import time
 from os.path import abspath, dirname, join
 from subprocess import Popen, PIPE
 from RobotNQL import RobotNQL
+from os import path
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)  # Procesa todo, aunque no se imprima todo
@@ -37,26 +39,36 @@ def run_validation(episode, cfg):
     wait = 0
     look = 0
     t_steps = cfg.t_steps
-    dirname_rgb = f'dataset/RGB/ep{episode}'
-    dirname_dep = f'dataset/Depth/ep{episode}'
-    dirname_model = f'validation/{episode}'
-    
+    dirname_rgb = f'dataset/RGB/epvalidation{episode}'
+    dirname_dep = f'dataset/Depth/epvalidation{episode}'
+    dirname_model = f'validation/validation{episode}'
+    print("Running validation...")
+
     agent = RobotNQL(epi=str(episode),cfg=cfg,validation=True)  # Reemplazar con la lógica correspondiente si hay un agente NQL
+    print("Agent created...")
+    
     env = UnityEnv(cfg=cfg, epi=episode)
+    print("Environment created...")
     simulation_speed = cfg.simulation_speed
 
     # Crear directorios necesarios
     Path(dirname_rgb).mkdir(parents=True, exist_ok=True)
     Path(dirname_dep).mkdir(parents=True, exist_ok=True)
     Path(dirname_model).mkdir(parents=True, exist_ok=True)
+    
+    env = UnityEnv(cfg=cfg, epi=episode)
 
     # Inicializar o cargar archivos de historial
-    file_recent_rewards = f'validation/{episode}/recent_rewards.dat'
-    file_recent_actions = f'validation/{episode}/recent_actions.dat'
-    file_reward_history = f'validation/{episode}/reward_history.dat'
-    file_action_history = f'validation/{episode}/action_history.dat'
-    file_ep_rewards = f'validation/{episode}/ep_rewards.dat'
+    file_recent_rewards = f'validation/validation{episode}/recent_rewards.dat'
+    file_recent_actions = f'validation/validation{episode}/recent_actions.dat'
+    file_reward_history = f'validation/validation{episode}/reward_history.dat'
+    file_action_history = f'validation/validation{episode}/action_history.dat'
+    file_ep_rewards = f'validation/validation{episode}/ep_rewards.dat'
 
+
+       
+          
+          
     recent_rewards = torch.load(file_recent_rewards) if os.path.exists(file_recent_rewards) else []
     recent_actions = torch.load(file_recent_actions) if os.path.exists(file_recent_actions) else []
     reward_history = torch.load(file_reward_history) if os.path.exists(file_reward_history) else []
@@ -64,47 +76,65 @@ def run_validation(episode, cfg):
     ep_rewards = torch.load(file_ep_rewards) if os.path.exists(file_ep_rewards) else []
 
     # Configuración del logger para el episodio
-    fh = logging.FileHandler(f'validation/{episode}/results.log')
+    fh = logging.FileHandler(f'validation/validation{episode}/results.log')
     fh.setLevel(logging.INFO)
     logger.addHandler(fh)
     
+    aset = cfg.actions
     testing = -1
     init_step = 0
     aux_total_rewards = 0
     
+    actions = []
+    rewards = []
+
+    if(init_step!=0):
+        actions= recent_actions
+        rewards= recent_rewards
+    
+    total_reward = aux_total_rewards
+    print(init_step)
+
     # Iniciar simulación
     env.send_data_to_pepper(f"step")
-    env.send_data_to_pepper(f"episode{episode}")
+    env.send_data_to_pepper(f"episodevalidation{episode}")
     env.send_data_to_pepper(f"speed{simulation_speed}")
     env.send_data_to_pepper(f"workdir{str(Path(__file__).parent.absolute())}")
     env.send_data_to_pepper(f"fov{cfg.robot_fov}")
-
-    # Bucle principal de validación
-    step = 1
-    terminal = False
-    total_reward = 0
-    state = None
+    env.close()
+    env = UnityEnv(cfg=cfg, epi=episode)
+    agent = RobotNQL(epi=str(episode),cfg=cfg,validation=True)  # Reemplazar con la lógica correspondiente si hay un agente NQL
+ 
+    reward = 0 #temp
+    terminal = 0
+    screen = None
     depth = None
+    screen, depth, reward, terminal = env.perform_action('-',init_step+1)
+    print("error fuera del loop",reward)
+    step=init_step+1
     while step <= t_steps + 1:
-        logger.info(f"Step={step}")
-        numSteps=0
+        print("estoy aqui a dentro del while")
+        
         action_index = 0
+        numSteps = 0
         
-        action_index = agent.perceive(state, depth, terminal, False, numSteps, step, testing)
+        action_index = agent.perceive(screen, depth, terminal, False, numSteps, step, testing)
+        step=step+1	
 
-        print("qu es esta vaina",action_index)       
+        if action_index == None:
+            action_index=1
         if not terminal:
-            state, depth, reward, terminal = env.perform_action(cfg.actions[action_index], step)
+            screen, depth, reward, terminal = env.perform_action(aset[action_index], step)
+            print("este es el primer if y el reward es :", reward )
         else:
-            state, depth, reward, terminal = env.perform_action("-", step)
+            screen, depth, reward, terminal = env.perform_action('-', step)
+            print("estoy en el else y el reward de aqui es :", reward)
         
-        if state is None or depth is None:
-            logger.error("State or depth is None after performing action!")
-            break  # Esto te ayuda a detectar el problema más temprano
+        if step >= t_steps:
+            terminal=1
         
-        action_index = agent.perceive(state, depth, terminal, False, numSteps, step, testing=-1)
-
-
+        
+        print(f'que tipo es reward{type(reward)}')
         # Handshake reward calculation
         if cfg.actions[action_index] == '4':
             if reward > 0:
@@ -147,12 +177,13 @@ def run_validation(episode, cfg):
         torch.save(recent_rewards, file_recent_rewards)
         torch.save(recent_actions, file_recent_actions)
 
-        step += 1
-
+        
     # Save final results
     reward_history.append(recent_rewards)
     action_history.append(recent_actions)
     ep_rewards.append(total_reward)
+    print('\n')
+
 
     torch.save(ep_rewards, file_ep_rewards)
     torch.save(reward_history, file_reward_history)
@@ -165,12 +196,26 @@ def run_validation(episode, cfg):
         
 
 def main(cfg, episode):
+
+    torch.manual_seed(torch.initial_seed())  
+    global process
+    process = Popen('false') # something long running
+	#signal.signal(signal.SIGINT, signalHandler)
+    
+
+
     # Preparar el entorno de la simulación
     command = './simDRLSR.x86_64'
     directory = '../'
     command = abspath(join(directory, command))
 
     process = open_simulation(command)
+
+    env = UnityEnv(cfg=cfg, epi=episode)
+    env.send_data_to_pepper("start")
+    time.sleep(1)
+    env.close()
+    time.sleep(1)
 
     try:
         # Ejecutar validación
