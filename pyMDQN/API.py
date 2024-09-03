@@ -2,21 +2,13 @@ import signal
 import torch
 import torchvision.transforms as T
 import numpy as np
-from PIL import Image
-from pathlib import Path
-import copy
-from TrainNQL import TrainNQL
 import os.path
-from os import path
-import torch.nn as nn
 from pathlib import Path
 from RobotNQL import RobotNQL
 from environment import Environment
-import pickle
 import time
 import shutil
 import logging
-import sys
 from subprocess import Popen
 from os.path import abspath, dirname, join
 import validation.configValidation as cfg
@@ -42,19 +34,18 @@ class API_Functions:
         time.sleep(5)
         process = Popen(command)
         time.sleep(5)
-        return process
-    
-    def signalHandler(self, sig, frame): #no creo q sirve pa nada
+        return process    
+
+    def killsim(self, process):
         process.terminate()
-        sys.exit(0)
+        time.sleep(10)    
     
-    
-    def start(self, ep=13):
+    ### START
+    def start(self, ep=13):  
         torch.manual_seed(torch.initial_seed())  
         global process
         process = Popen('false') 
         
-    
         episode = "validation" +str(ep) #name_ep = eiposde,,,,"validation13"
         self.episode = episode
         
@@ -77,58 +68,45 @@ class API_Functions:
         time.sleep(1)
         self.env.close_connection() 
         time.sleep(1)
-        print("acabe de iniciar") # debuggging
-        
+        #print("acabe de iniciar")
+
+        #Set or create directories for the images
         dirname_rgb = f'dataset/RGB/ep{episode}'
         dirname_dep = f'dataset/Depth/ep{episode}'
         dirname_model = f'validation/{episode}'
         
-        # Create directories for the episode where the images will be stored and read
         os.makedirs(dirname_rgb, exist_ok=True)
         os.makedirs(dirname_dep, exist_ok=True)
         os.makedirs(dirname_model, exist_ok=True)
 
-    # Prepare the validation
+    # Validate if the directories for the model are created if not create them and copy the files
     def prepare_validation_directory(self, ep):
         episode_str = str(ep)
         validation_dir = f'validation/validation{episode_str}/'
         os.makedirs(validation_dir, exist_ok=True)
-        print("episode_str", episode_str)
-        print("validation_dir", validation_dir)
+        #print("episode_str", episode_str)
+        #print("validation_dir", validation_dir)
         shutil.copy(self.config.__file__, validation_dir)
         shutil.copy(f'results/ep{episode_str}/modelDepth.net', validation_dir)
         shutil.copy(f'results/ep{episode_str}/tModelDepth.net', validation_dir)
         shutil.copy(f'results/ep{episode_str}/modelGray.net', validation_dir)
         shutil.copy(f'results/ep{episode_str}/tModelGray.net', validation_dir)
 
-    def reset(self, episode):
-        self.close()
-        time.sleep(5)
-        self.start(episode)
-
-    def close(self):
-        if self.process is not None:
-            self.env.send_data_to_pepper("stop")
-            self.process.terminate()
-            self.process.wait()
-            self.process = None
-            logger.info("Simulation terminated.")
-
-    def step(self, num_steps=5): #by default 5 steps
+    ### STEP
+    # Perform n steps in the simulation (can be set in validation/configValidation.py) or in the parameter num_steps
+    def step(self, num_steps):
         self.agent= RobotNQL(epi=self.episode, cfg=self.config, validation=True)
         self.env= Environment(self.config, epi=self.episode)
 
         if self.env and self.agent:
-            "entro al IFFFFFFFFFFFFFFFFFF"
-            t_steps = min(self.config.t_steps, num_steps)
-            aset = self.config.actions  # here we co
+            t_steps = min(self.config.t_steps, num_steps) #takes the min btw the # of steps in the config file and the parameter num_steps
+            aset = self.config.actions  # ['1','2','3','4'] wait, wave, handshake, do nothing
 
-            # Inicialización del entorno y configuración inicial
             step = 0
-            terminal = 0
+            terminal = 1
 
             try:
-                # nviarr comandos iniciales a Pepper
+                # Send initial data to Pepper
                 self.env.send_data_to_pepper("step" + str(step))
                 self.env.send_data_to_pepper("episode" + str(self.episode))
                 self.env.send_data_to_pepper("speed" + str(self.config.simulation_speed))
@@ -136,58 +114,58 @@ class API_Functions:
                 self.env.send_data_to_pepper("fov" + str(self.config.robot_fov))
                 self.env.close_connection()
                 self.env = Environment(self.config,epi=self.episode)
-            except OSError as e:
+            except OSError as e: #make sure the connection is still open
                 print("Into OSError")
-                if e.errno == 9:
+                if e.errno == 9: #if the connection is closed, restart the environment
                     self.env = Environment(self.config, epi=self.episode)
                     self.env.send_data_to_pepper("step" + str(step))
 
-            # Realizar la primera acción para inicializar el entorno
-            screen, depth, reward, terminal = self.env.perform_action('-', step+1) #poner +1
+            # Make the first action 
+            screen, depth, reward, terminal = self.env.perform_action('-', step+1) #+1 because the first step is 1
+            step= step+1            
             while step <= t_steps+1:
                 print(f"Step={step}")
                 action_index=0
                 testing = -1
+
+                #agent percives the environment
                 action_index = self.agent.perceive(screen, depth, terminal, False, 0, step, testing)
 
+                # update the step
+                step += 1
+
+                # Perform the action corresponding to the action_index (perceived)
                 if action_index is None:
                     action_index = 1
-
-                try:
-                    # Realizar la acción seleccionada
-                    if not terminal:
-                        screen, depth, reward, terminal = self.env.perform_action(aset[action_index], step)
-                    else:
-                        screen, depth, reward, terminal = self.env.perform_action('-', step)
-                except OSError as e:
-                    if e.errno == 9:
-                        print("Socket closed unexpectedly during step. Restarting environment...")
-                        self.env = Environment(self.config, epi=self.episode)
-                        screen, depth, reward, terminal = self.env.perform_action(aset[action_index], step)
-
-                # Actualización de paso
-                step += 1
+                if not terminal:
+                    screen, depth, reward, terminal = self.env.perform_action(aset[action_index], step)
+                else:
+                    screen, depth, reward, terminal = self.env.perform_action('-', step)
 
                 logger.info(f"Step {step}: Action {aset[action_index]}, Reward {reward}, Terminal {terminal}")
 
                 if step > t_steps or terminal:
+                    time.sleep(2)
+                    self.close()
+                    self.killsim(process)
                     break
 
                 time.sleep(self.config.simulation_speed)
-
-
-
-    def ensure_socket_is_open(self):
-        try:
-            self.env.socket.send(b"ping")  # verifica si el socket está abierto
-        except (OSError, AttributeError):
-            print("Socket is not open, reinitializing...")
-            self.env.close_connection()
-            self.env = Environment(self.config, epi=self.episode)
-
-    def signal_handler(self, sig, frame):
+                
+    ### RESET
+    def reset(self, episode):
         self.close()
-        sys.exit(0)
+        time.sleep(5)
+        self.start(episode)
+
+    ### CLOSE
+    def close(self):
+        if self.process is not None:
+            self.env.send_data_to_pepper("stop")
+            self.process.terminate()
+            self.process.wait()
+            self.process = None
+            logger.info("Simulation terminated.")
 
     def cleanup(self):
         self.close()
