@@ -26,16 +26,13 @@ class RobotNQL:
             file_modelGray = 'results/ep' + str(self.episode - 1) + '/modelGray.net'
             file_modelDepth = 'results/ep' + str(self.episode - 1) + '/modelDepth.net'
 
-        print(f"Loading modelGray from: {file_modelGray}")
-        print(f"Loading modelDepth from: {file_modelDepth}")
-
         self.modelGray = torch.load(file_modelGray).to(self.device)
         self.modelDepth = torch.load(file_modelDepth).to(self.device)
 
         print("Models loaded successfully")
 
     def perceive(self, state, depth, terminal, testing, numSteps, steps, testing_ep):
-            print(f"que hay en state:{state}")
+            
             curState = state.to(self.device)
             curDepth = depth.to(self.device)
             actionIndex = 0
@@ -56,11 +53,9 @@ class RobotNQL:
 
         if torch.rand(1) < self.ep:
             action = np.random.randint(0, self.n_actions)
-            print(f"Random action selected: {action}")
             return action
         else:
             action = self.greedy(state, depth)
-            print(f"Greedy action selected: {action}")
             return action
 
     def greedy(self, state, depth):
@@ -70,15 +65,11 @@ class RobotNQL:
 
         q1 = self.modelGray.forward(state).cpu().detach().numpy()[0]
         q2 = self.modelDepth.forward(depth).cpu().detach().numpy()[0]
-
-        print(f"Q values from modelGray: {q1}")
-        print(f"Q values from modelDepth: {q2}")
-
         ts = np.sum(q1)
         td = np.sum(q2)
 
         q_fus = (q1 / ts) * 0.5 + (q2 / td) * 0.5
-        print(f"Fused Q values: {q_fus}")
+
 
         maxq = q_fus[0]
         besta = [0]
@@ -91,5 +82,5 @@ class RobotNQL:
         self.bestq = maxq
         r = np.random.randint(0, len(besta))
         self.lastAction = besta[r]
-        print(f"Selected action: {besta[r]} with Q value: {maxq}")
+
         return besta[r]

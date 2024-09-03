@@ -201,7 +201,6 @@ using System;
             if(data.Equals("-")){
                 dataAction = AgentAction.DoNothing;
                 flagNewActionData = true; 
-                print("aqui estoy funcionando");
             return 0;
                 
             }

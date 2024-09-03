@@ -1,6 +1,6 @@
 #datageneration
 simulation_speed = 1
-t_steps = 560
+t_steps = 10
 robot_fov = 60
 #environment
 raw_frame_height = 320

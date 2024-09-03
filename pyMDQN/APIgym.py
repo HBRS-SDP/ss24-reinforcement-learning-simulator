@@ -1,7 +1,7 @@
 import torch
-import os
+import os 
 from pathlib import Path
-from environmentuno import UnityEnv
+from pepper_env import UnityEnv
 import validation.configValidation as dcfg
 import logging
 import time
@@ -9,27 +9,14 @@ from os.path import abspath, dirname, join
 from subprocess import Popen, PIPE
 from RobotNQL import RobotNQL
 from os import path
+from simulator_utils import start_simulator, kill_simulation
 
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)  # Procesa todo, aunque no se imprima todo
+logger.setLevel(logging.INFO)  
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 logger.addHandler(ch)
-
-def open_simulation(command):
-    if UnityEnv.sim_process is None:  # Solo abre si no está ya abierto
-        process = Popen(command)
-        time.sleep(5)
-        UnityEnv.sim_process = process  # Guarda la referencia del proceso en UnityEnv
-    else:
-        process = UnityEnv.sim_process  # Usa el proceso existente
-    return process
-
-def kill_simulation(process):
-     if process is not None:
-        process.terminate()
-        UnityEnv.sim_process = None 
 
 def run_validation(episode, cfg):
     # Inicializar variables
@@ -109,32 +96,31 @@ def run_validation(episode, cfg):
     terminal = 0
     screen = None
     depth = None
-    screen, depth, reward, terminal = env.perform_action('-',init_step+1)
-    print("error fuera del loop",reward)
-    step=init_step+1
-    while step <= t_steps + 1:
-        print("estoy aqui a dentro del while")
+    (screen, depth), reward, terminal,_ = env.step('-',init_step+1)
+  
+    actual_step=init_step+1
+    while actual_step <= t_steps + 1:
+ 
         
         action_index = 0
         numSteps = 0
         
-        action_index = agent.perceive(screen, depth, terminal, False, numSteps, step, testing)
-        step=step+1	
+        action_index = agent.perceive(screen, depth, terminal, False, numSteps, actual_step, testing)
+        actual_step+=1	
 
         if action_index == None:
             action_index=1
         if not terminal:
-            screen, depth, reward, terminal = env.perform_action(aset[action_index], step)
-            print("este es el primer if y el reward es :", reward )
+            (screen, depth), reward, terminal,_ = env.step(aset[action_index], actual_step)
+            
         else:
-            screen, depth, reward, terminal = env.perform_action('-', step)
-            print("estoy en el else y el reward de aqui es :", reward)
+            (screen, depth), reward, terminal,_ = env.step('-', actual_step)
+            
         
-        if step >= t_steps:
+        if actual_step >= t_steps:
             terminal=1
         
         
-        print(f'que tipo es reward{type(reward)}')
         # Handshake reward calculation
         if cfg.actions[action_index] == '4':
             if reward > 0:
@@ -162,7 +148,7 @@ def run_validation(episode, cfg):
 
         # Logging results
         logger.info('###################')
-        logger.info(f"STEP:\t{step}")
+        logger.info(f"STEP:\t{actual_step}")
         logger.info(f'Wait\t{wait}')
         logger.info(f'Look\t{look}')
         logger.info(f'Wave\t{wave}')
@@ -198,23 +184,12 @@ def run_validation(episode, cfg):
 def main(cfg, episode):
 
     torch.manual_seed(torch.initial_seed())  
-    global process
-    process = Popen('false') # something long running
-	#signal.signal(signal.SIGINT, signalHandler)
-    
-
-
-    # Preparar el entorno de la simulación
-    command = './simDRLSR.x86_64'
-    directory = '../'
-    command = abspath(join(directory, command))
-
-    process = open_simulation(command)
-
+    process = start_simulator()
     env = UnityEnv(cfg=cfg, epi=episode)
+    
+    
+    
     env.send_data_to_pepper("start")
-    time.sleep(1)
-    env.close()
     time.sleep(1)
 
     try:

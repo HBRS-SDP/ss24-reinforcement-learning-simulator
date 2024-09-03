@@ -1,36 +1,35 @@
-import config as dcfg  # Asegúrate de que config está correctamente configurado con el host y port
-from environmentuno import UnityEnv  # Suponiendo que tu clase está en environment.py
+import config as dcfg
+from pepper_env import UnityEnv  
 from pathlib import Path
 
 def test_connection(env):
-    print("Iniciando la prueba de conexión...")
+    print("Starting connection test...")
     try:
-        # Aquí ya estamos usando la instancia pasada como argumento
-        print("¡Conexión exitosa!")
+        print("Connection successful!")
     except Exception as e:
-        print(f"Error al intentar conectarse: {e}")
+        print(f"Error while trying to connect: {e}")
 
 def test_robot_information(env):
-    print("Iniciando la prueba para obtener información del robot...")
+    print("Starting test to retrieve robot information...")
     try:
-        # Usamos la instancia pasada como argumento
+        
         env.send_data_to_pepper("step0")
         env.send_data_to_pepper("episode0")
-        env.send_data_to_pepper("speed1")  # Configura la velocidad de simulación
-        env.send_data_to_pepper("workdir" + str(Path(__file__).parent.absolute()))  # Configura el directorio de trabajo
+        env.send_data_to_pepper("speed1")  
+        env.send_data_to_pepper("workdir" + str(Path(__file__).parent.absolute()))  
         env.send_data_to_pepper("fov90") 
         robot_info = env.get_robot_status()
-        print(f"Información del robot: {robot_info}")
+        print(f"Robot information: {robot_info}")
     except Exception as e:
-        print(f"Error al intentar obtener información del robot: {e}")
+        print(f"Error while trying to retrieve robot information: {e}")
 
 def test_robot_images(env):
-    print("Iniciando la prueba para obtener una imagen del robot...")
+    print("Starting test to retrieve an image from the robot...")
     try:
-        screen, depth, reward, terminal = env.perform_action("-", step=1)  # Solicitar imágenes en el paso 1
-        print(f"Imagen obtenida. Tamaño de screen: {screen.shape}, depth: {depth.shape}")
+        screen, depth, reward, terminal = env.perform_action("-", step=1)  
+        print(f"Image retrieved. Screen size: {screen.shape}, depth: {depth.shape}")  
     except Exception as e:
-        print(f"Error al intentar obtener la imagen del robot: {e}")
+        print(f"Error while trying to retrieve an image from the robot: {e}")
 
 if __name__ == "__main__":
     env = None
@@ -42,4 +41,4 @@ if __name__ == "__main__":
     finally:
         if env:
             env.close()
-            UnityEnv.close_simulation()  # Cierra la simulación solo una vez al final
+            UnityEnv.close_simulation()  

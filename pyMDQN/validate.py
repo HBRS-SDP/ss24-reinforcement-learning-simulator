@@ -138,7 +138,7 @@ def datavalidation(episode,cfg):
 	total_reward = aux_total_rewards
 	print(init_step)
 
-	env.send_data_to_pepper("step"+str(init_step))
+	env.send_data_to_pepper("step"+str(	))
 	env.send_data_to_pepper("episode"+str(episode))
 	env.send_data_to_pepper("speed"+str(simulation_speed))
 	env.send_data_to_pepper("workdir"+str(Path(__file__).parent.absolute()))
