@@ -21,14 +21,7 @@ def main(cfg, episode):
     
     torch.manual_seed(torch.initial_seed())
 
-    process = start_simulator()
-    
-    # Environment creation
-    env = UnityEnv(cfg=cfg, epi=episode)
-    
-    # Send initial command to simulator
-    env.send_data_to_pepper("start")
-    time.sleep(1)  
+    process = start_simulator() 
 
     try:
         

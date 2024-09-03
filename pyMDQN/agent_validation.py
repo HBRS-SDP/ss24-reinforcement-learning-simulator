@@ -17,7 +17,7 @@ def initialize_directories(episode):
     Path(dirname_rgb).mkdir(parents=True, exist_ok=True)
     Path(dirname_dep).mkdir(parents=True, exist_ok=True)
     Path(dirname_model).mkdir(parents=True, exist_ok=True)
-    print("Validation directories created.")
+    #print("Validation directories created.")
 
 def load_history(episode):
 
@@ -42,7 +42,7 @@ def initialize_logging(episode):
     fh = logging.FileHandler(f'validation/validation{episode}/results.log')
     fh.setLevel(logging.INFO)
     logger.addHandler(fh)
-    print("Logger configured.")
+    #print("Logger configured.")
 
 def setup_environment(cfg, episode):
     """Environment and agent initiation"""
@@ -90,7 +90,7 @@ def save_final_results(history, file_paths):
     torch.save(history['action_history'], file_paths['action_history'])
     torch.save([], file_paths['recent_rewards'])
     torch.save([], file_paths['recent_actions'])
-    print("Final results saved.")
+    #print("Final results saved.")
 
 
 def run_validation(episode, cfg):

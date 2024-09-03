@@ -200,9 +200,7 @@ using System;
         { 
             if(data.Equals("-")){
                 dataAction = AgentAction.DoNothing;
-                flagNewActionData = true; 
-            return 0;
-                
+                flagNewActionData = true;                
             }
             else
             {
