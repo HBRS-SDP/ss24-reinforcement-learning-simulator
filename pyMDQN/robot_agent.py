@@ -11,7 +11,7 @@ import config as dcfg #default config
 
 
 
-class Environment:
+class RobotAgent: #previous name: Environment anf previous py file: environment.py
 	def __init__(self,cfg=dcfg,epi=0):
 		# if gpu is to be used
 		#self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

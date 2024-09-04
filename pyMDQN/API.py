@@ -1,11 +1,10 @@
 import signal
 import torch
 import torchvision.transforms as T
-import numpy as np
 import os.path
 from pathlib import Path
 from RobotNQL import RobotNQL
-from environment import Environment
+from robot_agent import RobotAgent
 import time
 import shutil
 import logging
@@ -21,11 +20,11 @@ ch.setLevel(logging.INFO)
 logger.addHandler(ch)
 
 # CLass API to interact with the simulation
-class API_Functions:
+class env: #env name
     def __init__(self, config):
         self.config = config
         self.process = None
-        self.env = None
+        self.roag = None
         self.agent = None
         self.episode = None
 
@@ -41,6 +40,7 @@ class API_Functions:
         time.sleep(10)    
     
     ### START
+    
     def start(self, ep=13):  
         torch.manual_seed(torch.initial_seed())  
         global process
@@ -59,14 +59,14 @@ class API_Functions:
         command = abspath(join(directory,command))
         process = self.openSim(process, command)
 
-        # Start the environment and the agent
-        self.env = Environment(self.config, epi=episode)
+       
+        self.roag = RobotAgent(self.config, epi=episode)
         self.agent = RobotNQL(epi=str(episode), cfg=self.config, validation=True)  
 
         # initialize the agent
-        self.env.send_data_to_pepper("start")
+        self.roag.send_data_to_pepper("start")
         time.sleep(1)
-        self.env.close_connection() 
+        self.roag.close_connection() 
         time.sleep(1)
         #print("acabe de iniciar")
 
@@ -96,10 +96,10 @@ class API_Functions:
     # Perform n steps in the simulation (can be set in validation/configValidation.py) or in the parameter num_steps
     def step(self, num_steps):
         self.agent= RobotNQL(epi=self.episode, cfg=self.config, validation=True)
-        self.env= Environment(self.config, epi=self.episode)
+        self.roag= RobotAgent(self.config, epi=self.episode)
 
-        if self.env and self.agent:
-            t_steps = min(self.config.t_steps, num_steps) #takes the min btw the # of steps in the config file and the parameter num_steps
+        if self.roag and self.agent:
+            t_steps = max(self.config.t_steps, num_steps) #takes the min btw the # of steps in the config file and the parameter num_steps
             aset = self.config.actions  # ['1','2','3','4'] wait, wave, handshake, do nothing
 
             step = 0
@@ -107,21 +107,21 @@ class API_Functions:
 
             try:
                 # Send initial data to Pepper
-                self.env.send_data_to_pepper("step" + str(step))
-                self.env.send_data_to_pepper("episode" + str(self.episode))
-                self.env.send_data_to_pepper("speed" + str(self.config.simulation_speed))
-                self.env.send_data_to_pepper("workdir" + str(Path(__file__).parent.absolute()))
-                self.env.send_data_to_pepper("fov" + str(self.config.robot_fov))
-                self.env.close_connection()
-                self.env = Environment(self.config,epi=self.episode)
+                self.roag.send_data_to_pepper("step" + str(step))
+                self.roag.send_data_to_pepper("episode" + str(self.episode))
+                self.roag.send_data_to_pepper("speed" + str(self.config.simulation_speed))
+                self.roag.send_data_to_pepper("workdir" + str(Path(__file__).parent.absolute()))
+                self.roag.send_data_to_pepper("fov" + str(self.config.robot_fov))
+                self.roag.close_connection()
+                self.roag = RobotAgent(self.config,epi=self.episode)
             except OSError as e: #make sure the connection is still open
                 print("Into OSError")
                 if e.errno == 9: #if the connection is closed, restart the environment
-                    self.env = Environment(self.config, epi=self.episode)
-                    self.env.send_data_to_pepper("step" + str(step))
+                    self.roag = RobotAgent(self.config, epi=self.episode)
+                    self.roag.send_data_to_pepper("step" + str(step))
 
             # Make the first action 
-            screen, depth, reward, terminal = self.env.perform_action('-', step+1) #+1 because the first step is 1
+            screen, depth, reward, terminal = self.roag.perform_action('-', step+1) #+1 because the first step is 1
             step= step+1            
             while step <= t_steps+1:
                 print(f"Step={step}")
@@ -138,9 +138,9 @@ class API_Functions:
                 if action_index is None:
                     action_index = 1
                 if not terminal:
-                    screen, depth, reward, terminal = self.env.perform_action(aset[action_index], step)
+                    screen, depth, reward, terminal = self.roag.perform_action(aset[action_index], step)
                 else:
-                    screen, depth, reward, terminal = self.env.perform_action('-', step)
+                    screen, depth, reward, terminal = self.roag.perform_action('-', step)
 
                 logger.info(f"Step {step}: Action {aset[action_index]}, Reward {reward}, Terminal {terminal}")
 
@@ -161,7 +161,7 @@ class API_Functions:
     ### CLOSE
     def close(self):
         if self.process is not None:
-            self.env.send_data_to_pepper("stop")
+            self.roag.send_data_to_pepper("stop")
             self.process.terminate()
             self.process.wait()
             self.process = None
@@ -171,4 +171,4 @@ class API_Functions:
         self.close()
 
 
-signal.signal(signal.SIGINT, lambda sig, frame: API_Functions.cleanup())
+signal.signal(signal.SIGINT, lambda sig, frame: env.cleanup())

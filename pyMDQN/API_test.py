@@ -1,19 +1,17 @@
-from API import API_Functions
-
-
-import validation.configValidation as config# Importar la configuración del archivo config.py
+from API import env
+import validation.configValidation as config
 
 
 if __name__ == "__main__":
-    config = config  # Usar la configuración del archivo config.py
+    config = config  
     
-    sim_manager = API_Functions(config)
+    sim_manager = env(config)
 
-    # Iniciar la simulación
+    #start the simulation
     sim_manager.start(ep=13)
 
-    # Ejecutar pasos en la simulación
+    #n_steps 
     sim_manager.step(num_steps=5)
 
-    # Terminar la simulación
+    #close the simulation
     sim_manager.close()
