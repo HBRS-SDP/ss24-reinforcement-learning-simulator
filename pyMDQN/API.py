@@ -4,7 +4,7 @@ import torchvision.transforms as T
 import os.path
 from pathlib import Path
 from RobotNQL import RobotNQL
-from robot_agent import RobotAgent
+from pepper_controller import PepperController
 import time
 import shutil
 import logging
@@ -21,7 +21,12 @@ logger.addHandler(ch)
 
 # CLass API to interact with the simulation
 class env: #env name
+    
     def __init__(self, config):
+        """
+        Initialize the environment class. It takes a configuration object as input, 
+        and sets up the process, robot agent, and episode variables.
+        """
         self.config = config
         self.process = None
         self.roag = None
@@ -29,6 +34,17 @@ class env: #env name
         self.episode = None
 
     def openSim(self, process,command):
+        """
+        Opens the simulation by terminating first all process that are runnung
+        It waits for the processes to settle down before returning.
+        
+        Args:
+            process (Popen): The current running process.
+            command (str): The command to start the new simulation process.
+        
+        Returns:
+            process (Popen): The new process started by the command.
+        """
         process.terminate()
         time.sleep(5)
         process = Popen(command)
@@ -36,12 +52,31 @@ class env: #env name
         return process    
 
     def killsim(self, process):
+        """
+        Kills the simulation process and waits for it to terminate completely.
+        
+        Args:
+            process (Popen): The running process to be terminated.
+        """
         process.terminate()
         time.sleep(10)    
     
     ### START
     
-    def start(self, ep=13):  
+    def start(self, ep=13): 
+
+        """
+        Starts the environment by setting up the episode directory, starting the simulation,
+        and initializing the agent. It prepares directories for storing images.
+        
+        Args:
+            ep (int): The episode number used to start the environment (default: 13).
+
+        Returns:
+            None
+        """
+
+      
         torch.manual_seed(torch.initial_seed())  
         global process
         process = Popen('false') 
@@ -60,10 +95,10 @@ class env: #env name
         process = self.openSim(process, command)
 
        
-        self.roag = RobotAgent(self.config, epi=episode)
+        self.roag = PepperController(self.config, epi=episode)
         self.agent = RobotNQL(epi=str(episode), cfg=self.config, validation=True)  
 
-        # initialize the agent
+        # initialize pepper
         self.roag.send_data_to_pepper("start")
         time.sleep(1)
         self.roag.close_connection() 
@@ -81,6 +116,17 @@ class env: #env name
 
     # Validate if the directories for the model are created if not create them and copy the files
     def prepare_validation_directory(self, ep):
+        """
+        Prepares the directories for the current episode where the models are stored. It creates directories
+        if they do not exist and copies model files from the results directory.
+        
+        Args:
+            ep (int): The episode number.
+
+        Returns:
+            None
+        """
+        
         episode_str = str(ep)
         validation_dir = f'validation/validation{episode_str}/'
         os.makedirs(validation_dir, exist_ok=True)
@@ -93,10 +139,19 @@ class env: #env name
         shutil.copy(f'results/ep{episode_str}/tModelGray.net', validation_dir)
 
     ### STEP
-    # Perform n steps in the simulation (can be set in validation/configValidation.py) or in the parameter num_steps
     def step(self, num_steps):
+        """
+        Performs multiple steps in the simulation. It interacts with the agent to perceive actions and rewards for each step.
+        
+        Args:
+            num_steps (int): The number of steps to perform in the simulation. It would be the maximun between the number of steps in the config file and the parameter num_steps.
+        
+        Returns: 
+            None
+
+        """
         self.agent= RobotNQL(epi=self.episode, cfg=self.config, validation=True)
-        self.roag= RobotAgent(self.config, epi=self.episode)
+        self.roag= PepperController(self.config, epi=self.episode)
 
         if self.roag and self.agent:
             t_steps = max(self.config.t_steps, num_steps) #takes the min btw the # of steps in the config file and the parameter num_steps
@@ -113,11 +168,11 @@ class env: #env name
                 self.roag.send_data_to_pepper("workdir" + str(Path(__file__).parent.absolute()))
                 self.roag.send_data_to_pepper("fov" + str(self.config.robot_fov))
                 self.roag.close_connection()
-                self.roag = RobotAgent(self.config,epi=self.episode)
+                self.roag = PepperController(self.config,epi=self.episode)
             except OSError as e: #make sure the connection is still open
                 print("Into OSError")
                 if e.errno == 9: #if the connection is closed, restart the environment
-                    self.roag = RobotAgent(self.config, epi=self.episode)
+                    self.roag = PepperController(self.config, epi=self.episode)
                     self.roag.send_data_to_pepper("step" + str(step))
 
             # Make the first action 
@@ -153,13 +208,28 @@ class env: #env name
                 time.sleep(self.config.simulation_speed)
                 
     ### RESET
-    def reset(self, episode):
+    def reset(self, episode): 
+        """
+        Resets the environment by closing the current simulation and starting a new one 
+        for theepisode.
+        
+        Args:
+            episode (int): The episode number to reset the environment to.
+        
+        Returns:
+            None
+        """
+        
         self.close()
         time.sleep(5)
         self.start(episode)
 
     ### CLOSE
     def close(self):
+        """
+        Closes the simulation by sending a stop signal to the robot agent and terminating 
+        the process running the simulation.
+        """
         if self.process is not None:
             self.roag.send_data_to_pepper("stop")
             self.process.terminate()
@@ -167,8 +237,6 @@ class env: #env name
             self.process = None
             logger.info("Simulation terminated.")
 
-    def cleanup(self):
-        self.close()
 
-
-signal.signal(signal.SIGINT, lambda sig, frame: env.cleanup())
+# Close the environment when the program is interrupted
+signal.signal(signal.SIGINT, lambda sig, frame: env.close())
