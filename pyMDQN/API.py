@@ -113,6 +113,7 @@ class env: #env name
         os.makedirs(dirname_rgb, exist_ok=True)
         os.makedirs(dirname_dep, exist_ok=True)
         os.makedirs(dirname_model, exist_ok=True)
+        
 
     # Validate if the directories for the model are created if not create them and copy the files
     def prepare_validation_directory(self, ep):
@@ -123,8 +124,6 @@ class env: #env name
         Args:
             ep (int): The episode number.
 
-        Returns:
-            None
         """
         
         episode_str = str(ep)
@@ -146,12 +145,19 @@ class env: #env name
         Args:
             num_steps (int): The number of steps to perform in the simulation. It would be the maximun between the number of steps in the config file and the parameter num_steps.
         
-        Returns: 
-            None
-
+        Returns:
+            tuple: (observations, rewards, dones)
+            - observations (list): List of tuples containing 'screen' and 'depth' for each step.
+            - rewards (list): List of rewards obtained for each step.
+            - dones (list): List of booleans indicating if the episode has ended at each step.
         """
         self.agent= RobotNQL(epi=self.episode, cfg=self.config, validation=True)
         self.roag= PepperController(self.config, epi=self.episode)
+
+        self.observations = []
+        self.rewards = []
+        self.dones = []
+        
 
         if self.roag and self.agent:
             t_steps = max(self.config.t_steps, num_steps) #takes the min btw the # of steps in the config file and the parameter num_steps
@@ -199,6 +205,12 @@ class env: #env name
 
                 logger.info(f"Step {step}: Action {aset[action_index]}, Reward {reward}, Terminal {terminal}")
 
+                # Guardar la información de este paso en las listas correspondientes
+                self.observations.append((screen, depth))
+                self.rewards.append(reward)
+                self.dones.append(terminal)
+
+
                 if step > t_steps or terminal:
                     time.sleep(2)
                     self.close()
@@ -206,23 +218,31 @@ class env: #env name
                     break
 
                 time.sleep(self.config.simulation_speed)
-                
+
+        return self.observations, self.rewards, self.dones
+    
+
     ### RESET
-    def reset(self, episode): 
+    def reset(self, ep): 
         """
         Resets the environment by closing the current simulation and starting a new one 
         for theepisode.
         
         Args:
-            episode (int): The episode number to reset the environment to.
+            ep (int): The episode number to reset the environment to.
         
         Returns:
-            None
+            tuple: observations (list): List of tuples containing 'screen' and 'depth' for each step.  
         """
         
         self.close()
         time.sleep(5)
-        self.start(episode)
+        self.start(ep)
+
+
+        return self.observations
+
+
 
     ### CLOSE
     def close(self):
