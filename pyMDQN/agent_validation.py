@@ -125,7 +125,7 @@ def run_validation(episode, cfg):
 
     # First observation
     (screen, depth), reward, terminal, _ = env.step('-', init_step + 1)
-    actual_step = init_step + 1
+    actual_step = init_step
     
     # Validation loop
     while actual_step <= t_steps + 1:
