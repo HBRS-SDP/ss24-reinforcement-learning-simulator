@@ -105,11 +105,11 @@ def test_step_function(simulation):
 
             screen, depth = obs
 
-            # Validar que screen y depth sean tensores de torch
+            # Validate that screen and depth are PyTorch tensors
             assert isinstance(screen, torch.Tensor), f"Screen should be a torch tensor, but received {type(screen)}"
             assert isinstance(depth, torch.Tensor), f"Depth should be a torch tensor, but received {type(depth)}"
 
-            # Validar dimensiones de los tensores de screen y depth
+            # Validate the dimensions of screen and depth tensorses de los tensores de screen y depth
             assert screen.dim() == 4, f"Screen should be a 4-dimensional tensor, but has {screen.dim()} dimensions"
             assert depth.dim() == 4, f"Depth should be a 4-dimensional tensor, but has {depth.dim()} dimensions"
 
