@@ -35,7 +35,7 @@ class env: #env name
 
     def openSim(self, process,command):
         """
-        Opens the simulation by terminating first all process that are runnung
+        Opens the simulation by terminating first all process that are running
         It waits for the processes to settle down before returning.
         
         Args:
@@ -103,7 +103,7 @@ class env: #env name
         time.sleep(1)
         self.roag.close_connection() 
         time.sleep(1)
-        #print("acabe de iniciar")
+        #print("I'm ready")
 
         #Set or create directories for the images
         dirname_rgb = f'dataset/RGB/ep{episode}'
@@ -146,7 +146,7 @@ class env: #env name
             num_steps (int): The number of steps to perform in the simulation. It would be the maximun between the number of steps in the config file and the parameter num_steps.
         
         Returns:
-            tuple: (observations, rewards, dones)
+            observations, rewards, dones
             - observations (list): List of tuples containing 'screen' and 'depth' for each step.
             - rewards (list): List of rewards obtained for each step.
             - dones (list): List of booleans indicating if the episode has ended at each step.
@@ -183,7 +183,9 @@ class env: #env name
 
             # Make the first action 
             screen, depth, reward, terminal = self.roag.perform_action('-', step+1) #+1 because the first step is 1
-            step= step+1            
+            step= step+1          
+            self.observations.append((screen, depth)) 
+
             while step <= t_steps+1:
                 print(f"Step={step}")
                 action_index=0
@@ -205,8 +207,8 @@ class env: #env name
 
                 logger.info(f"Step {step}: Action {aset[action_index]}, Reward {reward}, Terminal {terminal}")
 
-                # Guardar la información de este paso en las listas correspondientes
-                self.observations.append((screen, depth))
+                # Store the reward and done
+                self.observations.append((screen, depth)) 
                 self.rewards.append(reward)
                 self.dones.append(terminal)
 
@@ -226,7 +228,7 @@ class env: #env name
     def reset(self, ep): 
         """
         Resets the environment by closing the current simulation and starting a new one 
-        for theepisode.
+        for the episode.
         
         Args:
             ep (int): The episode number to reset the environment to.
