@@ -143,7 +143,7 @@ Follow the next steps  to run the validation script :
   ```
 3. Execute the validation script using python:
 ```sh
-  python3 validate.py
+  python3 API_test.py
   ```
 
 
