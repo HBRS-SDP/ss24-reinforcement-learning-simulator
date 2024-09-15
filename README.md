@@ -18,13 +18,13 @@
     <li>
     <a href="#installation">Installation</a>
       <ul>
-      <li><a href="unity-configuration">Unity Configuration</a></li>
-      <li><a href="simdrlsr-configuration">SimDRLSR Configuration</a></li>
-      <li><a href="testing-configuration-files">Testing Configuration Files</a></li>
-      <li><a href="how-to-setup-the-conda-environment">How to setup the conda environment</a></li>
-      <li><a href="how-to-run-the-simulator">How to run the simulator</a></li>
-      <li><a href="validate-the-simulator">Validate the simulator</a></li>
-      <li><a href="training-with-pymdqn">Training with pyMDQN</a></li>
+      <li><a href="#unity-configuration">Unity Configuration</a></li>
+      <li><a href="#simdrlsr-configuration">SimDRLSR Configuration</a></li>
+      <li><a href="#testing-configuration-files">Testing Configuration Files</a></li>
+      <li><a href="#how-to-setup-the-conda-environment">How to setup the conda environment</a></li>
+      <li><a href="#how-to-run-the-simulator">How to run the simulator</a></li>
+      <li><a href="#validate-the-simulator">Validate the simulator</a></li>
+      <li><a href="#training-with-pymdqn">Training with pyMDQN</a></li>
       </ul>
     <li><a href="#license">License</a></li>
     <li><a href="#references">References</a></li>
@@ -98,7 +98,7 @@ Labels:
 - ‼️ : fundamental importance, needs to be configured;
 - ⚠️ : needs to be configured if the pyMDQN parameters are modified;
 
-## Testing Probability Configuration Files
+## Testing Configuration Files
 
 After setting up the simulator and before running a full training session, it's important to validate your configuration files. Follow these steps to run the configuration tests:
 
