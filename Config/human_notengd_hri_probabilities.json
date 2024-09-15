@@ -1,0 +1,124 @@
+{
+    "probabilities": [
+        {
+            "interaction_type": "WaitClose",
+            "probabilities": {
+                "Ignore": 100,
+                "Wait": 0,
+                "Look": 0,
+                "Move": 0,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "WaitMiddle",
+            "probabilities": {
+                "Ignore": 100,
+                "Wait": 0,
+                "Look": 0,
+                "Move": 0,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "WaitFar",
+            "probabilities": {
+                "Ignore": 100,
+                "Wait": 0,
+                "Look": 0,
+                "Move": 0,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "LookClose",
+            "probabilities": {
+                "Ignore": 60,
+                "Wait": 0,
+                "Look": 30,
+                "Move": 10,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "LookMiddle",
+            "probabilities": {
+                "Ignore": 70,
+                "Wait": 0,
+                "Look": 30,
+                "Move": 0,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "LookFar",
+            "probabilities": {
+                "Ignore": 90,
+                "Wait": 0,
+                "Look": 10,
+                "Move": 0,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "WaveClose",
+            "probabilities": {
+                "Ignore": 0,
+                "Wait": 0,
+                "Look": 0,
+                "Move": 100,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "WaveMiddle",
+            "probabilities": {
+                "Ignore": 0,
+                "Wait": 0,
+                "Look": 60,
+                "Move": 40,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "WaveFar",
+            "probabilities": {
+                "Ignore": 10,
+                "Wait": 0,
+                "Look": 50,
+                "Move": 40,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "HSClose",
+            "probabilities": {
+                "Ignore": 60,
+                "Wait": 0,
+                "Look": 20,
+                "Move": 20,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "HSMiddle",
+            "probabilities": {
+                "Ignore": 80,
+                "Wait": 0,
+                "Look": 20,
+                "Move": 0,
+                "Handshake": 0
+            }
+        },
+        {
+            "interaction_type": "HSFar",
+            "probabilities": {
+                "Ignore": 100,
+                "Wait": 0,
+                "Look": 0,
+                "Move": 0,
+                "Handshake": 0
+            }
+        }
+    ]
+}

@@ -1,24 +1,30 @@
 
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
 using System.Linq;
-using UnityEngine.UI;
-using UnityEditor;
-using System.Text;
-using System.ComponentModel.Design;
-using System.Globalization;
 using System.Runtime.Serialization.Formatters.Binary;
-//using System.Diagnostics;
-//using System.Security.Cryptography;
+using Newtonsoft.Json;
 
 
-class Items<T>
+public class Items<T>
 {
     public double Probability { get; set; }
     public T Item { get; set; }
+}
+
+// [System.Serializable]
+public class ProbabilityData
+{
+      public string interaction_type;
+      public Dictionary<string, int> probabilities;
+}
+
+// [System.Serializable]
+public class RootObject
+{
+    public List<ProbabilityData> probabilities;
 }
 
 public class AvatarBehaviors : MonoBehaviour
@@ -71,7 +77,7 @@ public class AvatarBehaviors : MonoBehaviour
 
     
 
-    private enum InteractionType
+    public enum InteractionType
     {
         WaitClose = 0,
         WaitMiddle = 1,
@@ -87,7 +93,7 @@ public class AvatarBehaviors : MonoBehaviour
         HSFar = 11,
     }
 
-    private enum HumanActionType
+    public enum HumanActionType
     {
         None = -1,
         Ignore = 0,
@@ -118,7 +124,6 @@ public class AvatarBehaviors : MonoBehaviour
         startToleranceTime = 0;
         robot = GameObject.FindGameObjectsWithTag("Robot")[0];
         robotHRI = robot.GetComponent<RobotInteraction>();
-        //probabilities = getProbabilities();
         scm = transform.GetComponent<AvatarCommandsManager>();
         uid = transform.GetComponent<UniqueIdDistributor>();
         pausedCommands = new List<Command>();
@@ -172,9 +177,8 @@ public class AvatarBehaviors : MonoBehaviour
 
         }
 
-        string file_engaged_prob = Path.Combine(path_config,"engaged_hri_probabilities.csv");
-        string file_human_not_engd_prob = Path.Combine(path_config,"human_notengd_hri_probabilities.csv");
-        string file_robot_not_engd_prob = Path.Combine(path_config,"robot_notengd_hri_probabilities.csv");
+        string file_engaged_prob = Path.Combine(path_config,"engaged_hri_probabilities.json");
+        string file_human_not_engd_prob = Path.Combine(path_config,"human_notengd_hri_probabilities.json");
         engagedProbTab = initProbabilities(file_engaged_prob);
         human_notEngdProbTab = initProbabilities(file_human_not_engd_prob);
         robot_notEngdProbTab = initProbabilities(file_human_not_engd_prob);
@@ -191,13 +195,17 @@ public class AvatarBehaviors : MonoBehaviour
         (int step,AgentAction action) robotAction = robotHRI.getActualAction();
         //Verifica se humano está de frente ao robô (se robô é visível)
         HumanActionType hriType = HumanActionType.Ignore;
+        
         if((hriCommands.Count() == 0))
         {       
             GameObject robotAttention = robotHRI.getPersonFocusedByRobot();
-            Command hriCommand = null;         
+            // Command hriCommand = null;         
             //Debug.Log("Human Action>>> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             //Debug.Log("Human Action>>> robot attention: "+robotAttention);
             //Verifica foco de atenção do robô
+            //Debug.Log($"Is human engaged: {isHumanEngaged}");
+            //Debug.Log($"Robot attention: {robotAttention}");
+            //Debug.Log($"Current robot action: {robotAction.action}");
             if((robotAttention==gameObject)||(isHumanEngaged)){
             //if(robotAttention==gameObject){            
 
@@ -292,7 +300,7 @@ public class AvatarBehaviors : MonoBehaviour
                         {
                             
                             case AgentAction.Wait:
-
+                                
                                 if(distance<=closeDistance){                                          
                                     hriType = getHumanActionByProb(probTab,InteractionType.WaitClose);
                                 }else if(distance<= farDistance){                            
@@ -356,7 +364,8 @@ public class AvatarBehaviors : MonoBehaviour
         }
         
         if(hriType!=HumanActionType.Ignore)       
-        {            
+        {   
+            
             if (runningCommands.Count() != 0)
             {
                 count--;
@@ -384,7 +393,6 @@ public class AvatarBehaviors : MonoBehaviour
                     hriCommands.Add(scm.sendCommand(generateCommandId(), Action.Animate, "Wait","", 1000));
                     break;
                 case HumanActionType.Handshake:
-                    //hriCommands.Add(scm.sendCommand(generateCommandId(), Action.Animate, "Wait","", 1000));
                     hriCommands.Add(scm.sendCommand(generateCommandId(), Action.HeadFocus, robotHead));
                     if(robotHRI.getActualAction().action==AgentAction.HandShake)
                     {  
@@ -454,12 +462,48 @@ public class AvatarBehaviors : MonoBehaviour
         }
     }
 
-    private HumanActionType getHumanActionByProb(List<List<Items<HumanActionType>>> probTab,InteractionType hri)
+    public HumanActionType getHumanActionByProb(List<List<Items<HumanActionType>>> probTab,InteractionType hri)
     {
+
+        // Check if probTab is null
+        if (probTab == null)
+        {
+            // Debug.LogError("Probability table (probTab) is null!");
+            return default(HumanActionType);
+        }
+
+        // Check if the hri index is within the valid range of probTab
+        if ((int)hri < 0 || (int)hri >= probTab.Count)
+        {
+            // Debug.LogError($"Invalid interaction type index: {hri}");
+            return default(HumanActionType);
+        }
+
+        // Check if the specific list in probTab for the given interaction type is null or empty
+        var humanActionList = probTab[(int)hri];
+        if (humanActionList == null || humanActionList.Count == 0)
+        {
+            // Debug.LogError($"No items found for interaction type {hri}");
+            return default(HumanActionType);
+        }
+
+        // Log the probabilities to make sure they are correctly populated
+        foreach (var item in humanActionList)
+        {
+            Debug.Log($"Action: {item.Item}, Probability: {item.Probability}");
+        }
+        
         var rnd = new System.Random();
         var probability = rnd.NextDouble();
-        var selectedHumanAction = probTab[(int)hri].SkipWhile(i => i.Probability < probability).First();
-        return selectedHumanAction.Item;  
+        var selectedHumanAction = humanActionList.SkipWhile(i => i.Probability < probability).FirstOrDefault();
+        if (selectedHumanAction == null)
+        {
+            Debug.LogError("No valid human action found based on the generated probability.");
+            return default(HumanActionType); // or handle appropriately
+        }
+
+        Debug.Log($"Selected action: {selectedHumanAction.Item}");
+        return selectedHumanAction.Item;
     }
 
     private List<List<float>> readProbTable(string file)
@@ -489,18 +533,55 @@ public class AvatarBehaviors : MonoBehaviour
     /* Inicia Probabilidades
     *  Lê arquivo csv com a probabilidade do humano agir de acordo com a distancia e comportamento do robo
     */
-    private List<List<Items<HumanActionType>>> initProbabilities(string file)
+    public List<List<Items<HumanActionType>>> initProbabilities(string file)
     {
+        if (!File.Exists(file))
+        {
+            Debug.LogError($"File not found: {file}");
+            return null;
+        }
+
+        string jsonString = File.ReadAllText(file);
+        Debug.Log($"Loaded JSON: {jsonString}");
+
+        var probabilityDataList = JsonConvert.DeserializeObject<RootObject>(jsonString);
+        Debug.Log($"Deserialized ProbabilityList: {JsonConvert.SerializeObject(probabilityDataList, Formatting.Indented)}");
+
+        
+        if (probabilityDataList == null || probabilityDataList.probabilities == null)
+        {
+            Debug.LogError("Failed to parse JSON or no probabilities found.");
+            return null;
+        }
+
         List<List<Items<HumanActionType>>> probTab = new List<List<Items<HumanActionType>>>();
-        List<List<float>> tab = readProbTable(file);
-        for(int i = 0; i < tab.Count;i++)
+
+        foreach (var probData in probabilityDataList.probabilities)
         {
             List<Items<HumanActionType>> auxRow = new List<Items<HumanActionType>>();
-            for(int j = 0; j < tab[i].Count;j++)
+
+            if (probData == null || probData.probabilities == null)
             {
-                float probValue = tab[i][j]/100;
-                auxRow.Add(new  Items<HumanActionType> {Probability = probValue, Item = (HumanActionType)j});
+                Debug.LogError("probData or probData.probabilities is null");
+                continue; // Skip this iteration if probData is null
             }
+
+            foreach (var kvp in probData.probabilities)
+            {
+                float probValue = kvp.Value / 100f; // Convert the probability value to a float
+                HumanActionType actionType;
+            
+                if (Enum.TryParse(kvp.Key, out actionType))
+                {
+                    auxRow.Add(new Items<HumanActionType> { Probability = probValue, Item = actionType });
+                }
+                else
+                {
+                    Debug.LogError($"Invalid HumanActionType: {kvp.Key}");
+                }
+            }
+
+            // Calculate cumulative probabilities
             List<Items<HumanActionType>> converted = new List<Items<HumanActionType>>(auxRow.Count);
             double sum = 0.0;
             foreach (var item in auxRow.Take(auxRow.Count - 1))
@@ -509,6 +590,7 @@ public class AvatarBehaviors : MonoBehaviour
                 converted.Add(new Items<HumanActionType> { Probability = sum, Item = item.Item });
             }
             converted.Add(new Items<HumanActionType> { Probability = 1.0, Item = auxRow.Last().Item });
+            
             probTab.Add(converted);
         }
         return probTab;
@@ -696,6 +778,7 @@ public class AvatarBehaviors : MonoBehaviour
             Debug.Log("It's not possible execute command!");
         }
     }
+    
     private GameObject getGameObjectById(int id)
     {
         GameObject gO = null;

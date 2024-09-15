@@ -173,9 +173,23 @@ public class ConfigureSimulation : MonoBehaviour
         return config;
     }
 
-    public string getPathConfig()
+    public virtual string getPathConfig()
     {
         return Path.Combine(Application.dataPath,"..",xmlConfigure.path_prob_folder);
+    }
+    
+    // for testing purposes, path to config folder with JSON files
+    public virtual void InitializeForTesting()
+    {
+        dir_fileName = Path.Combine(Application.dataPath, "..", "config.xml");
+        if (File.Exists(dir_fileName))
+        {
+            xmlConfigure = loadConfig(dir_fileName);
+        }
+        else
+        {
+            xmlConfigure = new Configure { path_prob_folder = "Config" };
+        }
     }
 
     public string getWorkDir()

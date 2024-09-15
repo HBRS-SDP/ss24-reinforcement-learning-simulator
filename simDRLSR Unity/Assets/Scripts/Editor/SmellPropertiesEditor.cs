@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 
 [CustomEditor(typeof(SmellProperties))]
-class DecalMeshHelperEditor : Editor
+class DecalMeshHelperEditor : UnityEditor.Editor
 {
     public override void OnInspectorGUI()
     {

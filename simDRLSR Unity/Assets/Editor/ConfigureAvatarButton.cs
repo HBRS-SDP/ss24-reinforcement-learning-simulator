@@ -4,7 +4,7 @@ using UnityEditor;
 
 
 [CustomEditor(typeof(ConfigureAvatar))]
-public class ConfigureAvatarButton : Editor
+public class ConfigureAvatarButton : UnityEditor.Editor
 {
     public override void OnInspectorGUI()
     {
