@@ -1,22 +1,14 @@
 
-// using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
 using System.Linq;
-// using UnityEngine.UI;
-// using UnityEditor;
-// using System.Text;
-// using System.ComponentModel.Design;
-// using System.Globalization;
 using System.Runtime.Serialization.Formatters.Binary;
-//using System.Diagnostics;
-//using System.Security.Cryptography;
 using Newtonsoft.Json;
 
 
-class Items<T>
+public class Items<T>
 {
     public double Probability { get; set; }
     public T Item { get; set; }
@@ -85,7 +77,7 @@ public class AvatarBehaviors : MonoBehaviour
 
     
 
-    private enum InteractionType
+    public enum InteractionType
     {
         WaitClose = 0,
         WaitMiddle = 1,
@@ -101,7 +93,7 @@ public class AvatarBehaviors : MonoBehaviour
         HSFar = 11,
     }
 
-    private enum HumanActionType
+    public enum HumanActionType
     {
         None = -1,
         Ignore = 0,
@@ -470,7 +462,7 @@ public class AvatarBehaviors : MonoBehaviour
         }
     }
 
-    private HumanActionType getHumanActionByProb(List<List<Items<HumanActionType>>> probTab,InteractionType hri)
+    public HumanActionType getHumanActionByProb(List<List<Items<HumanActionType>>> probTab,InteractionType hri)
     {
 
         // Check if probTab is null
@@ -541,7 +533,7 @@ public class AvatarBehaviors : MonoBehaviour
     /* Inicia Probabilidades
     *  Lê arquivo csv com a probabilidade do humano agir de acordo com a distancia e comportamento do robo
     */
-    private List<List<Items<HumanActionType>>> initProbabilities(string file)
+    public List<List<Items<HumanActionType>>> initProbabilities(string file)
     {
         if (!File.Exists(file))
         {

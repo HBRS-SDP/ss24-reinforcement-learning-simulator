@@ -7,7 +7,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
      
     [CustomEditor(typeof(ConfigBlendShapes))]
-    public class EditorBlendShapes:Editor {
+    public class EditorBlendShapes:UnityEditor.Editor {
      
         ConfigBlendShapes blendShapes;
         public List<int> selected = new List<int>();
