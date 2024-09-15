@@ -20,6 +20,7 @@
       <ul>
       <li><a href="unity-configuration">Unity Configuration</a></li>
       <li><a href="simdrlsr-configuration">SimDRLSR Configuration</a></li>
+      <li><a href="testing-configuration-files">Testing Configuration Files</a></li>
       <li><a href="how-to-setup-the-conda-environment">How to setup the conda environment</a></li>
       <li><a href="how-to-run-the-simulator">How to run the simulator</a></li>
       <li><a href="validate-the-simulator">Validate the simulator</a></li>
@@ -97,6 +98,26 @@ Labels:
 - ‼️ : fundamental importance, needs to be configured;
 - ⚠️ : needs to be configured if the pyMDQN parameters are modified;
 
+## Testing Probability Configuration Files
+
+After setting up the simulator and before running a full training session, it's important to validate your configuration files. Follow these steps to run the configuration tests:
+
+1. Ensure you are in the Unity project directory:
+   ```sh
+   cd ss24-reinforcement-learning-simulator/'simDRLSR Unity'
+   ```
+2. Open the Unity project and navigate to the Test Runner:
+    In Unity, go to Window > General > Test Runner
+
+3. In the Test Runner window, select "Edit Mode" and click "Run All" to execute all configuration tests.
+
+4. Verify that all tests pass. These tests check:
+  - Proper loading of probability files
+  - Correct JSON format of configuration files
+  - Validity of probability distributions
+  - Proper initialization of avatar behaviors
+
+By running these tests, you can ensure that your configuration is correct before starting a time-consuming training process.
 
 
 ## How to setup the conda environment
